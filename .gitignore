@@ -8,3 +8,4 @@ dist-ssr/
 .DS_Store
 coverage/
 npm-debug.log*
+.claude/
