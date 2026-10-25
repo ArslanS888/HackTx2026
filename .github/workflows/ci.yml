@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repo
+      - uses: actions/checkout@v4
+
+      # 2. Set up Node 22 with npm cache
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # 3. Install exact dependencies from lock file
+      - run: npm ci
+
+      # 4. Lint — fails on any warning or error
+      - run: npm run lint
+
+      # 5. Run tests once (no watch mode)
+      - run: npm test -- --run
+
+      # 6. Production build — uses placeholder env so no real secrets needed
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-key
