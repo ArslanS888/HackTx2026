@@ -6,6 +6,11 @@ export function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+export function isAllowedEmail(email, domain) {
+  if (!domain) return true;
+  return email.toLowerCase().endsWith("@" + domain.toLowerCase());
+}
+
 export function friendlyAuthError(error) {
   if (!error) return "Something went wrong. Please try again.";
   const msg = (error.message ?? "").toLowerCase();
@@ -35,37 +40,14 @@ export function friendlyAuthError(error) {
   return "Something went wrong. Please try again.";
 }
 
-export function formatRelativeTime(date, now = new Date()) {
-  const diff = Math.round((new Date(date) - now) / 60000);
-  if (diff > 60) return `in ${Math.round(diff / 60)}h`;
-  if (diff > 1) return `in ${diff} min`;
-  if (diff >= 0) return "starting now";
-  if (diff > -60) return `started ${-diff} min ago`;
-  return `started ${Math.round(-diff / 60)}h ago`;
-}
-
-export function distanceMiles(a, b) {
-  const R = 3958.8;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const lat1 = (a.lat * Math.PI) / 180;
-  const lat2 = (b.lat * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.asin(Math.sqrt(h));
-}
-
-export function isAllowedEmail(email, domain) {
-  if (!domain) return true;
-  return email.toLowerCase().endsWith("@" + domain.toLowerCase());
-}
-
-export function formatTime(date) {
-  return new Date(date).toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+// e.g. "2 min ago", "3 h ago", "Jan 5"
+export function formatTimeAgo(date) {
+  const diff = Math.round((Date.now() - new Date(date).getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} d ago`;
+  return new Date(date).toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
 export function formatDate(date) {

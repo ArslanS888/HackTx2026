@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, PlusCircle, User } from "lucide-react";
+import { MapPin, MessageSquare, User } from "lucide-react";
 
 export default function BottomNav() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t border-gray-100 bg-white"
+      className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t border-amber-100 bg-white"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="flex items-center justify-around py-2">
@@ -18,16 +18,16 @@ export default function BottomNav() {
           onClick={() => navigate("/")}
           className={`flex flex-col items-center gap-0.5 px-6 py-1 text-xs font-medium ${active("/")}`}
         >
-          <Home className="h-6 w-6" />
-          <span>Nearby</span>
+          <MapPin className="h-6 w-6" />
+          <span>Places</span>
         </button>
 
         <button
-          onClick={() => navigate("/create")}
+          onClick={() => navigate("/place/new")}
           className="flex flex-col items-center gap-0.5 px-6 py-1"
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary shadow-lg">
-            <PlusCircle className="h-6 w-6 text-white" />
+            <MapPin className="h-5 w-5 text-white" />
           </div>
         </button>
 

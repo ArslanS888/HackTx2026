@@ -37,23 +37,20 @@ export async function getMyProfile(userId) {
   return data;
 }
 
-export async function createProfile({ id, display_name, major, interests }) {
+export async function createProfile({ id, display_name }) {
   const { data, error } = await supabase
     .from("profiles")
-    .insert({ id, display_name, major, interests })
+    .insert({ id, display_name })
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function updateProfile(
-  userId,
-  { display_name, major, interests },
-) {
+export async function updateProfile(userId, { display_name }) {
   const { data, error } = await supabase
     .from("profiles")
-    .update({ display_name, major, interests })
+    .update({ display_name })
     .eq("id", userId)
     .select()
     .single();
@@ -61,140 +58,110 @@ export async function updateProfile(
   return data;
 }
 
-// ─── Events ──────────────────────────────────────────────────────────────────
+// ─── Places ──────────────────────────────────────────────────────────────────
 
-export async function getUpcomingEvents() {
-  const now = new Date();
-  const windowStart = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
-  const windowEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
-
+export async function getPlaces() {
   const { data, error } = await supabase
-    .from("events")
-    .select(
-      `
-      *,
-      host:profiles!created_by(display_name),
-      event_members(count)
-    `,
-    )
-    .eq("status", "open")
-    .gte("starts_at", windowStart)
-    .lte("starts_at", windowEnd)
-    .order("starts_at", { ascending: true });
-
+    .from("places")
+    .select("*, creator:profiles!created_by(display_name)")
+    .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map((e) => ({
-    ...e,
-    host_name: e.host?.display_name ?? "Unknown",
-    member_count: e.event_members?.[0]?.count ?? 0,
+  return data ?? [];
+}
+
+export async function getPlace(id) {
+  const { data, error } = await supabase
+    .from("places")
+    .select("*, creator:profiles!created_by(display_name)")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createPlace({ name, description, lat, lng, radius_meters }, userId) {
+  const { data, error } = await supabase
+    .from("places")
+    .insert({ name, description, lat, lng, radius_meters, created_by: userId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// ─── Notes ───────────────────────────────────────────────────────────────────
+
+export async function getNotesAtPlace(placeId) {
+  const { data, error } = await supabase
+    .from("notes")
+    .select("*, author:profiles!author_id(display_name), replies(count)")
+    .eq("place_id", placeId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((n) => ({
+    ...n,
+    author_name: n.author?.display_name ?? "Anonymous",
+    reply_count: n.replies?.[0]?.count ?? 0,
   }));
 }
 
-export async function getEvent(id) {
+export async function getNote(id) {
   const { data, error } = await supabase
-    .from("events")
-    .select(
-      `
-      *,
-      host:profiles!created_by(id, display_name),
-      event_members(user_id, joined_at, profile:profiles(id, display_name))
-    `,
-    )
+    .from("notes")
+    .select("*, author:profiles!author_id(display_name), place:places(id, name, lat, lng, radius_meters)")
     .eq("id", id)
     .single();
   if (error) throw error;
   return {
     ...data,
-    host_name: data.host?.display_name ?? "Unknown",
-    member_count: data.event_members?.length ?? 0,
-    members: data.event_members ?? [],
+    author_name: data.author?.display_name ?? "Anonymous",
   };
 }
 
-export async function createEvent(
-  { title, description, category, place_name, lat, lng, starts_at, max_people },
-  userId,
-) {
-  const { data: event, error } = await supabase
-    .from("events")
-    .insert({
-      title,
-      description,
-      category,
-      place_name,
-      lat,
-      lng,
-      starts_at,
-      max_people,
-      created_by: userId,
-    })
+export async function createNote({ place_id, content }, userId) {
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("notes")
+    .insert({ place_id, author_id: userId, content, expires_at: expiresAt })
     .select()
     .single();
   if (error) throw error;
-
-  await supabase
-    .from("event_members")
-    .insert({ event_id: event.id, user_id: userId });
-  return event;
+  return data;
 }
 
-export async function joinEvent(eventId, userId) {
-  const { error } = await supabase
-    .from("event_members")
-    .insert({ event_id: eventId, user_id: userId });
-  if (error) throw error;
-}
-
-export async function leaveEvent(eventId, userId) {
-  const { error } = await supabase
-    .from("event_members")
-    .delete()
-    .eq("event_id", eventId)
-    .eq("user_id", userId);
-  if (error) throw error;
-}
-
-export async function cancelEvent(eventId) {
-  const { error } = await supabase
-    .from("events")
-    .update({ status: "cancelled" })
-    .eq("id", eventId);
-  if (error) throw error;
-}
-
-export async function getMyHostedEvents(userId) {
-  const now = new Date().toISOString();
+export async function getMyNotes(userId) {
   const { data, error } = await supabase
-    .from("events")
-    .select("*, event_members(count)")
-    .eq("created_by", userId)
-    .eq("status", "open")
-    .gte("starts_at", now)
-    .order("starts_at", { ascending: true });
+    .from("notes")
+    .select("*, place:places(id, name)")
+    .eq("author_id", userId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map((e) => ({
-    ...e,
-    member_count: e.event_members?.[0]?.count ?? 0,
+  return data ?? [];
+}
+
+// ─── Replies ─────────────────────────────────────────────────────────────────
+
+export async function getReplies(noteId) {
+  const { data, error } = await supabase
+    .from("replies")
+    .select("*, author:profiles!author_id(display_name)")
+    .eq("note_id", noteId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    ...r,
+    author_name: r.author?.display_name ?? "Anonymous",
   }));
 }
 
-export async function getMyJoinedEvents(userId) {
-  const now = new Date().toISOString();
+export async function createReply({ note_id, content }, userId) {
   const { data, error } = await supabase
-    .from("event_members")
-    .select(
-      "event:events(*, host:profiles!created_by(display_name), event_members(count))",
-    )
-    .eq("user_id", userId)
-    .gte("event.starts_at", now)
-    .neq("event.created_by", userId);
+    .from("replies")
+    .insert({ note_id, author_id: userId, content })
+    .select()
+    .single();
   if (error) throw error;
-  return (data ?? [])
-    .map((r) => r.event)
-    .filter(Boolean)
-    .map((e) => ({
-      ...e,
-      host_name: e.host?.display_name ?? "Unknown",
-      member_count: e.event_members?.[0]?.count ?? 0,
-    }));
+  return data;
 }

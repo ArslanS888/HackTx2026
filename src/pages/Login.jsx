@@ -99,9 +99,9 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-primary px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-white">Tagalong</h1>
+          <h1 className="text-4xl font-bold text-white">Katha</h1>
           <p className="mt-2 text-white/70">
-            Find people joining events near you
+            Leave a note. Someone nearby will find it.
           </p>
         </div>
 

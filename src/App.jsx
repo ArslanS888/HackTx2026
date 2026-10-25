@@ -2,14 +2,16 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
-import Nearby from "./pages/Nearby";
-import CreateEvent from "./pages/CreateEvent";
-import EventDetail from "./pages/EventDetail";
+import Places from "./pages/Places";
+import PlaceBoard from "./pages/PlaceBoard";
+import CreateNote from "./pages/CreateNote";
+import NoteDetail from "./pages/NoteDetail";
+import CreatePlace from "./pages/CreatePlace";
 import Profile from "./pages/Profile";
 
 function Spinner() {
   return (
-    <div className="flex h-screen items-center justify-center bg-white">
+    <div className="flex h-screen items-center justify-center bg-surface">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
     </div>
   );
@@ -63,23 +65,39 @@ export default function App() {
           path="/"
           element={
             <RequireAuth>
-              <Nearby />
+              <Places />
             </RequireAuth>
           }
         />
         <Route
-          path="/create"
+          path="/place/new"
           element={
             <RequireAuth>
-              <CreateEvent />
+              <CreatePlace />
             </RequireAuth>
           }
         />
         <Route
-          path="/event/:id"
+          path="/place/:id"
           element={
             <RequireAuth>
-              <EventDetail />
+              <PlaceBoard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/place/:id/note/new"
+          element={
+            <RequireAuth>
+              <CreateNote />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/note/:id"
+          element={
+            <RequireAuth>
+              <NoteDetail />
             </RequireAuth>
           }
         />
